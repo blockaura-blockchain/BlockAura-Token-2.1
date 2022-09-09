@@ -90,89 +90,6 @@ library SafeMath {
     }
 }
 
-// File: openzeppelin-solidity/contracts/access/Roles.sol
-
-/**
- * @title Roles
- * @dev Library for managing addresses assigned to a Role.
- */
-library Roles {
-    struct Role {
-        mapping (address => bool) bearer;
-    }
-
-    /**
-     * @dev give an account access to this role
-     */
-    function add(Role storage role, address account) internal {
-        require(account != address(0));
-        require(!has(role, account));
-
-        role.bearer[account] = true;
-    }
-
-    /**
-     * @dev remove an account's access to this role
-     */
-    function remove(Role storage role, address account) internal {
-        require(account != address(0));
-        require(has(role, account));
-
-        role.bearer[account] = false;
-    }
-
-    /**
-     * @dev check if an account has this role
-     * @return bool
-     */
-    function has(Role storage role, address account) internal view returns (bool) {
-        require(account != address(0));
-        return role.bearer[account];
-    }
-}
-
-// File: openzeppelin-solidity/contracts/access/roles/PauserRole.sol
-
-contract PauserRole {
-    using Roles for Roles.Role;
-
-    event PauserAdded(address indexed account);
-    event PauserRemoved(address indexed account);
-
-    Roles.Role private _pausers;
-
-    constructor () internal {
-        _addPauser(msg.sender);
-    }
-
-    modifier onlyPauser() {
-        require(isPauser(msg.sender));
-        _;
-    }
-
-    function isPauser(address account) public view returns (bool) {
-        return _pausers.has(account);
-    }
-
-    function addPauser(address account) public onlyPauser {
-        _addPauser(account);
-    }
-
-    function renouncePauser() public {
-        _removePauser(msg.sender);
-    }
-
-    function _addPauser(address account) internal {
-        _pausers.add(account);
-        emit PauserAdded(account);
-    }
-
-    function _removePauser(address account) internal {
-        _pausers.remove(account);
-        emit PauserRemoved(account);
-    }
-}
-
 /*
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -250,6 +167,95 @@ contract Ownable is Context {
   }
 }
 
+// File: openzeppelin-solidity/contracts/access/Roles.sol
+
+/**
+ * @title Roles
+ * @dev Library for managing addresses assigned to a Role.
+ */
+library Roles {
+    struct Role {
+        mapping (address => bool) bearer;
+    }
+
+    /**
+     * @dev give an account access to this role
+     */
+    function add(Role storage role, address account) internal {
+        require(account != address(0));
+        require(!has(role, account));
+
+        role.bearer[account] = true;
+    }
+
+    /**
+     * @dev remove an account's access to this role
+     */
+    function remove(Role storage role, address account) internal {
+        require(account != address(0));
+        require(has(role, account));
+
+        role.bearer[account] = false;
+    }
+
+    /**
+     * @dev check if an account has this role
+     * @return bool
+     */
+    function has(Role storage role, address account) internal view returns (bool) {
+        require(account != address(0));
+        return role.bearer[account];
+    }
+}
+
+// File: openzeppelin-solidity/contracts/access/roles/PauserRole.sol
+
+contract PauserRole is Ownable{
+    using Roles for Roles.Role;
+
+    event PauserAdded(address indexed account);
+    event PauserRemoved(address indexed account);
+
+    Roles.Role private _pausers;
+
+    constructor () internal {
+        _addPauser(msg.sender);
+    }
+
+    modifier onlyPauser() {
+        require(isPauser(msg.sender));
+        _;
+    }
+
+    function isPauser(address account) public view returns (bool) {
+        return _pausers.has(account);
+    }
+
+    function addPauser(address account) public onlyPauser {
+        _addPauser(account);
+    }
+
+    function removePauser(address account) public onlyPauser {
+        _removePauser(account);
+      
+    }
+    function renouncePauser() public {
+        _removePauser(msg.sender);
+    }
+
+    function _addPauser(address account) internal onlyOwner{  // only owner can add pauser
+        _pausers.add(account);
+        emit PauserAdded(account);
+    }
+
+    function _removePauser(address account) internal onlyOwner{ // only owner can remove pauser
+        _pausers.remove(account);
+        emit PauserRemoved(account);
+    }
+}
+
+
+
 contract MinterRole is Ownable{
   using Roles for Roles.Role;
 
@@ -263,7 +269,7 @@ contract MinterRole is Ownable{
   }
 
   modifier onlyMinter() {
-    require(isMinter(msg.sender));
+    require(isMinter(msg.sender), "you are not minter");
     _;
   }
 
@@ -285,12 +291,12 @@ contract MinterRole is Ownable{
     _removeMinter(msg.sender);
   }
 
-  function _addMinter(address account) internal {
+  function _addMinter(address account) internal onlyOwner{  //only owner can add minter
         minters.add(account);
         emit MinterAdded(account);
   }
 
-  function _removeMinter(address account) internal {
+  function _removeMinter(address account) internal onlyOwner{  //only owner can remove minter
     minters.remove(account);
     emit MinterRemoved(account);
   }
@@ -324,7 +330,7 @@ contract Pausable is PauserRole {
      * @dev Modifier to make a function callable only when the contract is not paused.
      */
     modifier whenNotPaused() {
-        require(!_paused);
+        require(!_paused,"Can not mint contract is paused");
         _;
     }
 
@@ -365,7 +371,7 @@ contract Pausable is PauserRole {
  * all accounts just by listening to said events. Note that this isn't required by the specification, and other
  * compliant implementations may not do it.
  */
-contract ERC20 is IERC20, Ownable, MinterRole {
+contract ERC20 is IERC20, MinterRole, Pausable {
     using SafeMath for uint256;
 
     mapping (address => uint256) private _balances;
@@ -442,7 +448,7 @@ contract ERC20 is IERC20, Ownable, MinterRole {
         return true;
     }
 
-    function mint( address spender, uint256 value) public onlyMinter returns (bool) {
+    function mint( address spender, uint256 value) public onlyMinter whenNotPaused returns (bool) {
         require(spender != address(0));
         require(value+_totalSupply <= 2000000000000000, "value exceeds beyond maximum supply");
         _mint(spender, value);
@@ -496,7 +502,7 @@ contract ERC20 is IERC20, Ownable, MinterRole {
      * @param account The account that will receive the created tokens.
      * @param value The amount that will be created.
      */
-    function _mint(address account, uint256 value) internal {
+    function _mint(address account, uint256 value) whenNotPaused internal {
         require(account != address(0));
 
         _totalSupply = _totalSupply.add(value);
@@ -510,7 +516,7 @@ contract ERC20 is IERC20, Ownable, MinterRole {
      * @param account The account whose tokens will be burnt.
      * @param value The amount that will be burnt.
      */
-    function _burn(address account, uint256 value) internal {
+    function _burn(address account, uint256 value) whenNotPaused internal {
         require(account != address(0));
 
         _totalSupply = _totalSupply.sub(value);
@@ -526,7 +532,7 @@ contract ERC20 is IERC20, Ownable, MinterRole {
      * @param account The account whose tokens will be burnt.
      * @param value The amount that will be burnt.
      */
-    function _burnFrom(address account, uint256 value) public returns (bool) {
+    function _burnFrom(address account, uint256 value) internal returns (bool) {
         _allowed[account][msg.sender] = _allowed[account][msg.sender].sub(value);
         _burn(account, value);
         emit Approval(account, msg.sender, _allowed[account][msg.sender]);
@@ -541,7 +547,7 @@ contract ERC20 is IERC20, Ownable, MinterRole {
  * @title Pausable token
  * @dev ERC20 modified with pausable transfers.
  **/
-contract ERC20Pausable is ERC20, Pausable {
+contract ERC20Pausable is ERC20 {
     function transfer(address to, uint256 value) public whenNotPaused returns (bool) {
         return super.transfer(to, value);
     }
@@ -611,5 +617,6 @@ contract BlockauraToken is ERC20Pausable, ERC20Detailed {
     public
     ERC20Detailed (name, symbol, decimals) {
         _mint(msg.sender, totalSupply);
+
     }
 }
