@@ -231,11 +231,11 @@ contract PauserRole is Ownable{
         return _pausers.has(account);
     }
 
-    function addPauser(address account) public onlyPauser {
+    function addPauser(address account) public onlyOwner {
         _addPauser(account);
     }
 
-    function removePauser(address account) public onlyPauser {
+    function removePauser(address account) public onlyOwner {
         _removePauser(account);
       
     }
@@ -243,12 +243,12 @@ contract PauserRole is Ownable{
         _removePauser(msg.sender);
     }
 
-    function _addPauser(address account) internal onlyOwner{  // only owner can add pauser
+    function _addPauser(address account) internal{  // only owner can add pauser
         _pausers.add(account);
         emit PauserAdded(account);
     }
 
-    function _removePauser(address account) internal onlyOwner{ // only owner can remove pauser
+    function _removePauser(address account) internal{ // only owner can remove pauser
         _pausers.remove(account);
         emit PauserRemoved(account);
     }
@@ -277,12 +277,12 @@ contract MinterRole is Ownable{
     return minters.has(account);
   }
 
-  function addMinter(address account) public onlyMinter {
+  function addMinter(address account) public onlyOwner {
     _addMinter(account);
       
   }
   
-  function removeMinter(address account) public onlyMinter {
+  function removeMinter(address account) public onlyOwner {
         _removeMinter(account);
       
   }
@@ -291,12 +291,12 @@ contract MinterRole is Ownable{
     _removeMinter(msg.sender);
   }
 
-  function _addMinter(address account) internal onlyOwner{  //only owner can add minter
+  function _addMinter(address account) internal{  //only owner can add minter
         minters.add(account);
         emit MinterAdded(account);
   }
 
-  function _removeMinter(address account) internal onlyOwner{  //only owner can remove minter
+  function _removeMinter(address account) internal{  //only owner can remove minter
     minters.remove(account);
     emit MinterRemoved(account);
   }
