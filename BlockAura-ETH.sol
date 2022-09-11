@@ -610,7 +610,7 @@ contract ERC20Detailed is IERC20 {
     }
 }
 
-// File: contracts/ZoomToken.sol
+// File: contracts/BlockauraToken.sol
 
 contract BlockauraToken is ERC20Pausable, ERC20Detailed {
     constructor (string memory name, string memory symbol, uint8 decimals, uint256 totalSupply)
