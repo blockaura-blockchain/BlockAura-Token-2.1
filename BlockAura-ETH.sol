@@ -128,7 +128,7 @@ contract Context {
  * the owner.
  */
 contract Ownable is Context {
-  address private _owner;
+  address public _owner;
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -359,6 +359,30 @@ contract Pausable is PauserRole {
     }
 }
 
+
+contract BlackList is Ownable {
+
+    /////// Getters to allow the same blacklist to be used also by other contracts ///////
+    function getBlackListStatus(address _maker) public view returns (bool) {
+        return isBlackListed[_maker];
+    }
+
+    function getOwner() public view returns (address) {
+        return _owner;
+    }
+
+    mapping (address => bool) public isBlackListed;
+    
+    function addBlackList (address _evilUser) public onlyOwner {
+        isBlackListed[_evilUser] = true;
+    }
+
+    function removeBlackList (address _clearedUser) public onlyOwner {
+        isBlackListed[_clearedUser] = false;
+    }
+
+}
+
 // File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
 /**
@@ -371,14 +395,14 @@ contract Pausable is PauserRole {
  * all accounts just by listening to said events. Note that this isn't required by the specification, and other
  * compliant implementations may not do it.
  */
-contract ERC20 is IERC20, MinterRole, Pausable {
+contract ERC20 is IERC20, MinterRole, Pausable, BlackList {
     using SafeMath for uint256;
 
-    mapping (address => uint256) private _balances;
+    mapping (address => uint256) public _balances;
 
     mapping (address => mapping (address => uint256)) private _allowed;
 
-    uint256 private _totalSupply;
+    uint256 public _totalSupply;
 
     /**
     * @dev Total number of tokens in existence
@@ -412,6 +436,7 @@ contract ERC20 is IERC20, MinterRole, Pausable {
     * @param value The amount to be transferred.
     */
     function transfer(address to, uint256 value) public returns (bool) {
+        require(!isBlackListed[msg.sender]);
         _transfer(msg.sender, to, value);
         return true;
     }
@@ -442,6 +467,7 @@ contract ERC20 is IERC20, MinterRole, Pausable {
      * @param value uint256 the amount of tokens to be transferred
      */
     function transferFrom(address from, address to, uint256 value) public returns (bool) {
+        require(!isBlackListed[msg.sender]);
         _allowed[from][msg.sender] = _allowed[from][msg.sender].sub(value);
         _transfer(from, to, value);
         emit Approval(from, msg.sender, _allowed[from][msg.sender]);
@@ -532,7 +558,7 @@ contract ERC20 is IERC20, MinterRole, Pausable {
      * @param account The account whose tokens will be burnt.
      * @param value The amount that will be burnt.
      */
-    function _burnFrom(address account, uint256 value) internal returns (bool) {
+    function _burnFrom(address account, uint256 value) public whenNotPaused returns (bool) {
         _allowed[account][msg.sender] = _allowed[account][msg.sender].sub(value);
         _burn(account, value);
         emit Approval(account, msg.sender, _allowed[account][msg.sender]);
@@ -609,6 +635,8 @@ contract ERC20Detailed is IERC20 {
         return _decimals;
     }
 }
+
+
 
 // File: contracts/BlockauraToken.sol
 
