@@ -1,10 +1,10 @@
-BlockAura Token Smart Contract V2.1
+BlockAura Token Smart Contract V3.0
 This repository contains token contract, BlockAura-ETH.sol with contracts PauserRole, Context, Ownable, MinterRole, Pausable, ERC20, ERC20Detailed and BlockauraToken.
 Smart Contract Solutions
 
-BlockAura-ETH V2.1 Dapp have seven basic contracts:
+BlockAura-ETH V3.0 Dapp have seven basic contracts:
 
-BlockauraToken.sol: This is the Token smart contract on solidity. It has been inherited with features of PauserRole, Context, Ownable, MinterRole, Pausable, ERC20, ERC20Detailed. The tokenomics of BlockAura-Token-2.1 can be referred here.
+BlockauraToken.sol: This is the Token smart contract on solidity. It has been inherited with features of PauserRole, Context, Ownable, MinterRole, Pausable, ERC20, ERC20Detailed. The tokenomics of BlockAura-Token-3.0 can be referred here.
 
 PauserRole.sol: This is the contract which holds the BlockAura token minting, transfers, burning operations to pause and is being completely controlled by the minters only.
 
